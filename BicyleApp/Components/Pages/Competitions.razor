@@ -1,0 +1,143 @@
+﻿@page "/competitions"
+@using BicyleApp.Data.Models
+@using BicyleApp.Data.ViewModels
+@using static BicyleApp.Data.Enums.Enum
+@inject CompetitionService CompetitionService
+
+<h3>Competition Management</h3>
+<RoleView Role="UserRole.Admin">
+
+<EditForm Model="newCompetition" OnValidSubmit="SaveCompetition">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label>Title</label>
+        <InputText class="form-control" @bind-Value="newCompetition.Title" />
+    </div>
+
+    <div class="form-group">
+        <label>Start Date</label>
+        <InputDate class="form-control" @bind-Value="newCompetition.StartDate" />
+    </div>
+
+    <div class="form-group">
+        <label>End Date</label>
+        <InputDate class="form-control" @bind-Value="newCompetition.EndDate" />
+    </div>
+
+    <div class="form-group">
+        <label>Status</label>
+        <InputSelect class="form-control" @bind-Value="newCompetition.Status">
+            @foreach (var status in Enum.GetValues<CompetitionStatus>())
+            {
+                <option value="@status">@status</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button class="btn btn-success mt-2">
+        @(newCompetition.CompetitionId == null ? "Create" : "Update")
+    </button>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(statusMessage))
+{
+    <div class="alert alert-info mt-2">@statusMessage</div>
+}
+
+<hr />
+
+<h4>All Competitions</h4>
+
+@if (competitions.Any())
+{
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Period</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in competitions)
+            {
+                <tr>
+                    <td>@c.Title</td>
+                    <td>@c.StartDate.ToShortDateString() - @c.EndDate.ToShortDateString()</td>
+                    <td>@c.Status</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => Edit(c)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(c.CompetitionId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No competitions found.</p>
+}
+</RoleView>
+
+@code {
+    private List<Competition> competitions = new();
+    private CompetitionViewModel newCompetition = new();
+    private string statusMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCompetitions();
+    }
+
+    private async Task LoadCompetitions()
+    {
+        competitions = await CompetitionService.GetAllAsync();
+    }
+
+    private async Task SaveCompetition()
+    {
+        var competition = new Competition
+            {
+                Title = newCompetition.Title,
+                StartDate = newCompetition.StartDate,
+                EndDate = newCompetition.EndDate,
+                Status = newCompetition.Status
+            };
+
+        if (newCompetition.CompetitionId == 0)
+        {
+            await CompetitionService.AddAsync(competition);
+            statusMessage = "Competition created.";
+        }
+        else
+        {
+            await CompetitionService.UpdateAsync(newCompetition);
+            statusMessage = "Competition updated.";
+        }
+
+        newCompetition = new CompetitionViewModel();
+        await LoadCompetitions();
+    }
+
+    private void Edit(Competition c)
+    {
+        newCompetition = new CompetitionViewModel
+            {
+                CompetitionId = c.CompetitionId,
+                Title = c.Title,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                Status = c.Status
+            };
+    }
+
+    private async Task Delete(int id)
+    {
+        await CompetitionService.DeleteAsync(id);
+        await LoadCompetitions();
+    }
+}

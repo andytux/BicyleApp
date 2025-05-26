@@ -1,0 +1,152 @@
+﻿@page "/myrides"
+@inject RideService RideService
+@inject AuthStateService AuthState
+@inject CompetitionService CompetitionService
+@using BicyleApp.Data.Models
+@using BicyleApp.Data.ViewModels
+
+<h3>My Rides</h3>
+
+@if (activeCompetition == null)
+{
+    <p class="text-warning">There is no active competition at the moment.</p>
+}
+else
+{
+    <p><strong>Active Competition:</strong> @activeCompetition.Title (@activeCompetition.StartDate.ToShortDateString() - @activeCompetition.EndDate.ToShortDateString())</p>
+
+    <EditForm Model="rideVm" OnValidSubmit="SaveRide">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Date</label>
+            <InputDate class="form-control" @bind-Value="rideVm.Date" />
+        </div>
+
+        <div class="form-group">
+            <label>Distance (km)</label>
+            <InputNumber class="form-control" @bind-Value="rideVm.DistanceKm" />
+        </div>
+
+        <button class="btn btn-success mt-2">
+            @(rideVm.RideId.HasValue ? "Update" : "Add Ride")
+        </button>
+    </EditForm>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p class="alert alert-info mt-2">@message</p>
+    }
+
+    <hr />
+
+    <h4>Your Rides</h4>
+
+    @if (rides.Any())
+    {
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Distance (km)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in rides.OrderByDescending(r => r.Date))
+                {
+                    <tr>
+                        <td>@r.Date.ToShortDateString()</td>
+                        <td>@r.DistanceKm</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" @onclick="() => Edit(r)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => Delete(r.RideId)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No rides recorded yet.</p>
+    }
+}
+
+@code {
+    private RideViewModel rideVm = new();
+    private List<Ride> rides = new();
+    private Competition? activeCompetition;
+    private string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        activeCompetition = await CompetitionService.GetActiveCompetitionAsync();
+        if (activeCompetition != null && AuthState.UserId.HasValue)
+        {
+            rides = await RideService.GetByUserAsync(AuthState.UserId.Value);
+        }
+    }
+
+    private async Task SaveRide()
+    {
+        if (activeCompetition == null || !AuthState.UserId.HasValue)
+            return;
+
+        
+
+        var ride = new Ride
+            {
+                RideId = rideVm.RideId ?? 0,
+                Date = rideVm.Date,
+                DistanceKm = rideVm.DistanceKm,
+                CompetitionId = activeCompetition.CompetitionId,
+                UserId = AuthState.UserId.Value
+            };
+
+        if (rideVm.RideId.HasValue)
+        {
+            if (ride.Date < activeCompetition.StartDate || ride.Date > activeCompetition.EndDate)
+            {
+                message = "Ride date must be within the competition period.";
+                return;
+            }
+
+            await RideService.UpdateAsync(ride);
+            message = "Ride updated.";
+        }
+        else
+        {
+            var exists = await RideService.RideExistsOnDateAsync(ride.UserId, ride.Date);
+            if (exists)
+            {
+                message = "You already have a ride for that date.";
+                return;
+            }
+
+            await RideService.AddAsync(ride);
+            message = "Ride added.";
+        }
+
+        rideVm = new();
+        rides = await RideService.GetByUserAsync(AuthState.UserId.Value);
+    }
+
+    private void Edit(Ride r)
+    {
+        rideVm = new RideViewModel
+            {
+                RideId = r.RideId,
+                Date = r.Date,
+                DistanceKm = r.DistanceKm,
+                CompetitionId = r.CompetitionId
+            };
+    }
+
+    private async Task Delete(int id)
+    {
+        await RideService.DeleteAsync(id);
+        rides = await RideService.GetByUserAsync(AuthState.UserId.Value);
+    }
+}

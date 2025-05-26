@@ -1,0 +1,86 @@
+﻿@page "/winners"
+@using BicyleApp.Data.Models
+@using BicyleApp.Data.ViewModels
+@using static BicyleApp.Data.Enums.Enum
+@inject CompetitionService CompetitionService
+@inject RankingService RankingService
+@inject AuthStateService AuthStateService
+
+<h3>Winners</h3>
+<RoleView Role="UserRole.Admin">
+
+@if (!competitions.Any())
+{
+    <p>No competitions found.</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>Choose Competition:</label>
+        <select class="form-control" @bind="selectedId">
+             <option value="0">--select--</option>
+            @foreach (var c in competitions)
+            {
+                <option value="@c.CompetitionId">@c.Title</option>
+            }
+        </select>
+    </div>
+
+    <button class="btn btn-primary mb-3" @onclick="LoadWinners">Show Winners</button>
+
+    @if (kmWinners.Any())
+    {
+        <h4>Top by Distance</h4>
+        <ol>
+            @foreach (var winner in kmWinners)
+            {
+                <li>@winner.Name (@winner.City) – <strong>@winner.TotalKm</strong> km</li>
+            }
+        </ol>
+    }
+
+    @if (rideWinners.Any())
+    {
+        <h4>Top by Ride Count</h4>
+        <ol>
+            @foreach (var winner in rideWinners)
+            {
+                <li>@winner.Name (@winner.City) – <strong>@winner.RideCount</strong> rides</li>
+            }
+
+        </ol>
+    }
+}
+</RoleView>
+
+@code {
+    private List<Competition> competitions = new();
+    private List<WinnerViewModel> kmWinners = new();
+    private List<WinnerViewModel> rideWinners = new();
+
+    private int _selectedId;
+
+    private int selectedId
+    {
+        get => _selectedId;
+        set
+        {
+            _selectedId = value;
+            _ = LoadWinners();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        competitions = await CompetitionService.GetAllAsync();
+        if (competitions.Any())
+        {
+            await LoadWinners();
+        }
+    }
+
+    private async Task LoadWinners()
+    {
+        (kmWinners, rideWinners) = await RankingService.GetWinnersAsync(selectedId);
+    }
+}

@@ -1,0 +1,90 @@
+﻿@page "/ranking"
+@inject RankingService RankingService
+@inject CompetitionService CompetitionService
+@using BicyleApp.Data.Models
+
+
+<h3>Top 10 Rankings</h3>
+
+@if (!competitions.Any())
+{
+    <p>No active competitions.</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>Select Competition:</label>
+        <select class="form-control" @bind="selectedId">
+            <option value="0">--select--</option>
+            @foreach (var competition in competitions)
+            {
+                <option value="@competition.CompetitionId">@competition.Title</option>
+            }
+        </select>
+    </div>
+
+    @if (topByKm.Any())
+    {
+        <h4>Top 10 by Distance (km)</h4>
+        <ol>
+            @foreach (var (user, totalKm) in topByKm)
+            {
+                <li>@user.Name (@user.City) – <strong>@totalKm</strong> km</li>
+            }
+        </ol>
+    }
+
+    @if (topByRides.Any())
+    {
+        <h4>Top 10 by Ride Count</h4>
+        <ol>
+            @foreach (var (user, rideCount) in topByRides)
+            {
+                <li>@user.Name (@user.City) – <strong>@rideCount</strong> rides</li>
+            }
+        </ol>
+    }
+}
+
+@code {
+    private List<Competition> competitions = new();
+    private int selectedCompetitionId;
+
+    private List<(User User, double TotalKm)> topByKm = new();
+    private List<(User User, int RideCount)> topByRides = new();
+
+    private int _selectedId;
+
+    private int selectedId
+    {
+        get => _selectedId;
+        set
+        {
+            _selectedId = value;
+            selectedCompetitionId = _selectedId;
+            _ = LoadRanking(); // async fire & forget
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        competitions = await CompetitionService.GetActiveAsync();
+
+        if (competitions.Any())
+        {
+            selectedCompetitionId = competitions.First().CompetitionId;
+            await LoadRanking();
+        }
+    }
+
+    private async Task LoadRanking()
+    {
+        topByKm = await RankingService.GetTopByKmAsync(selectedCompetitionId);
+        topByRides = await RankingService.GetTopByRideCountAsync(selectedCompetitionId);
+    }
+
+    private void HandleChange()
+    {
+        // Do something
+    }
+}

@@ -1,0 +1,43 @@
+BicyleApp – Dokumentation
+1. Einleitung
+Die Anwendung „BicyleApp“ ist eine Webanwendung zur Verwaltung und Auswertung von Fahrradwettbewerben. Benutzer können ihre Fahrten erfassen, an Wettbewerben teilnehmen und Bestenlisten einsehen. Administratoren haben zusätzlich die Möglichkeit, Wettbewerbe zu verwalten und Sieger zu bestimmen.
+2. Funktionsübersicht
+Die Anwendung umfasst folgende Hauptfunktionen:
+•	- Benutzerregistrierung und -anmeldung
+•	- Rollenbasierte Rechteverwaltung (Admin/User)
+•	- Erstellung und Verwaltung von Wettbewerben
+•	- Erfassung von Fahrradfahrten mit Distanz und Datum
+•	- Anzeige persönlicher Fahrten
+•	- Ranglisten nach gefahrenen Kilometern oder Anzahl Fahrten
+•	- Anzeige von Wettbewerbsgewinnern
+3. Datenmodell
+Das Datenmodell besteht aus den folgenden Entitäten:
+•	- User: Enthält persönliche Daten, E-Mail, Rolle und Stadt.
+•	- Competition: Beschreibt einen Wettbewerb mit Start-/Enddatum und Status.
+•	- Ride: Repräsentiert eine Fahrt eines Nutzers innerhalb eines Wettbewerbs.
+4. Services
+Die Businesslogik ist in folgenden Services gekapselt:
+•	- AuthService: Passwortverifikation, Hashing, Authentifizierung.
+•	- AuthStateService: Zustandsverwaltung des eingeloggten Users.
+•	- UserService: Verwaltung der Benutzerinformationen.
+•	- CompetitionService: Verwaltung der Wettbewerbe.
+•	- RideService: Verwaltung von Fahrten.
+•	- RankingService: Berechnung von Ranglisten und Gewinnern.
+5. Benutzeroberfläche
+Die Weboberfläche ist in verschiedene Seiten gegliedert:
+•	- /register: Registrierung neuer Nutzer
+•	- /login: Anmeldung vorhandener Nutzer
+•	- /myrides: Verwaltung eigener Fahrten
+•	- /competitions: Verwaltung von Wettbewerben
+•	- /ranking: Anzeige von Ranglisten
+•	- /winners: Anzeige der Wettbewerbsgewinner (nur Admin)
+6. Testszenarien
+Zur Überprüfung der Funktionalität wurden folgende Tests durchgeführt:
+•	• Registrierung: Ein neuer Nutzer wird registriert und anschließend korrekt gespeichert.
+•	• Anmeldung: Bestehende Benutzer können sich mit korrektem Passwort anmelden.
+•	• Fahrt anlegen: Ein Benutzer legt eine Fahrt mit Datum und Kilometerstand an.
+•	• Wettbewerb erstellen: Admin legt einen Wettbewerb an und dieser wird in der Übersicht angezeigt.
+•	• Rangliste anzeigen: Nach mehreren Fahrten verschiedener Nutzer wird die Rangliste korrekt berechnet.
+•	• Gewinnerermittlung: Nach Abschluss eines Wettbewerbs werden Sieger nach Distanz und Fahrtanzahl ermittelt.
+7. Fazit
+Die Anwendung bietet eine umfassende Lösung für das Management von Fahrradwettbewerben. Durch die klare Trennung von Benutzer- und Administrationsfunktionen sowie die automatisierte Auswertung von Ranglisten ist sie sowohl benutzerfreundlich als auch effektiv in der Verwaltung

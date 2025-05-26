@@ -1,0 +1,19 @@
+﻿@using static BicyleApp.Data.Enums.Enum
+@inject AuthStateService Auth
+
+@if (Auth.Role == Role)
+{
+    @ChildContent
+}
+else
+{
+    <p>You haven't the permission...</p>
+}
+
+@code {
+    [Parameter]
+    public UserRole Role { get; set; } = UserRole.User;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}
